@@ -6,19 +6,16 @@ Create sexy looking line graphs, built with the help of Pixi on the canvas eleme
 
 - Support for more line chart styling options
 - Add a destroy method
-- Reduce dependancies
+- Reduce dependencies
 - Create github pages
 
 ### Contribute ###
 
-We would love for you to be apart of this project and in the journey of laying a path for faster and more expressive charting API, in support of canvas and soon WebGL which both have optimitic futures.
-
-Make sure to read the [Contributing Guide](https://github.com/Boyyce/groph/blob/master/CONTRIBUTING.md)
-before submitting changes.
+We would love for you to be apart of this project and in the journey of laying down a path for faster, more expressive charting API, in support of canvas (and soon WebGL) which both have optimistic futures. In your pull request please do not commit `groph.min.js`.
 
 ### Features ###
 
-- Canvas renderer, what drives google maps
+- Canvas renderer, what drives Google maps
 - Reuse groph instances for a faster build
 - Sleek animations
 
@@ -27,7 +24,7 @@ before submitting changes.
 - [Line graph 1](https://github.com/Boyyce/groph/blob/master/example/index.html)
 
 ### Usage ###
-Include on your page groph and its dependancies. I have compilied pixi with the bare neccesities in under < 57kb. This is located inside the `vendors` directory. 
+Include on your page groph and its dependencies. I have compiled pixi with the bare necessities in under < 57kb. This is located inside the `vendors` directory. 
 ```html
 <script src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore.min.js"></script>
@@ -62,7 +59,7 @@ var groph = new Groph({
 ### API Methods ###
 
 - `remove`: Removes groph and DOM reference but keeps processed and canvas data.
-- `start`: Sets up groph again. You can repass data1 & data2.
+- `start`: Sets up groph again. You can re-pass `data1` & `data2`.
 
 &nbsp;
 
