@@ -1,0 +1,23 @@
+{
+  "name": "groph",
+  "version": "0.7.0",
+  "description": "Sexy line graphs built on-top of pixi's super fast canvas renderer.",
+
+  "author": "Ricky Boyce",
+  "homepage": "http://github.com/boyyce/groph",
+  "bugs": "https://github.com/boyyce/groph/issues",
+  "license": "MIT",
+  "licenseUrl": "http://www.opensource.org/licenses/mit-license.php",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boyyce/groph.git"
+  },
+
+  "main": "groph.js",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "0.6.0"
+  }
+}
