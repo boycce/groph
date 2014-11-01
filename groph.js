@@ -3,7 +3,7 @@
 
     (c) 2014 Ricky Boyce.
     Groph may be freely distributed under the MIT license.
-    For all details and documentation: http://github.com/boyyce/groph
+    For all details and documentation: https://github.com/boyyce/groph
 */
 
 (function() {
@@ -15,12 +15,12 @@
     p = Groph.prototype,
 
     // Load textures once.
-    dot1Tex  = "imgs/dot-profit.png",
-    dot2Tex  = "imgs/dot-loss.png",
-    tip1Tex  = "imgs/tooltip-profit.png",
-    tip2Tex  = "imgs/tooltip-loss.png",
-    tip1ArrowTex = "imgs/tooltip-arrow-profit.png",
-    tip2ArrowTex = "imgs/tooltip-arrow-loss.png";
+    dot1Tex  = "dot-profit.png",
+    dot2Tex  = "dot-loss.png",
+    tip1Tex  = "tooltip-profit.png",
+    tip2Tex  = "tooltip-loss.png",
+    tip1ArrowTex = "tooltip-arrow-profit.png",
+    tip2ArrowTex = "tooltip-arrow-loss.png";
 
 
   // --- Public Methods ----------------------------
@@ -31,6 +31,7 @@
 
     var defaults = {
       selector : '#graph1',
+      cwd: '',
       w : 1008,
       h : 365,
       pointMax : false, // Set the default max point. (higher points push this.)
@@ -51,6 +52,7 @@
     x.tipTexWidth = 12; // This needs to be automated.
     x.selector  = settings.selector;
     x.target    = $(x.selector);
+    x.cwd       = settings.cwd;
     x.w         = settings.w;
     x.h         = settings.h;
     x.cache     = settings.cache;
@@ -75,12 +77,12 @@
     // Constants
 
     Tween = TWEEN;
-    if (_.isString(dot1Tex)) dot1Tex = PIXI.Texture.fromImage(dot1Tex);
-    if (_.isString(dot2Tex)) dot2Tex = PIXI.Texture.fromImage(dot2Tex);
-    if (_.isString(tip1Tex)) tip1Tex = PIXI.Texture.fromImage(tip1Tex);
-    if (_.isString(tip2Tex)) tip2Tex = PIXI.Texture.fromImage(tip2Tex);
-    if (_.isString(tip1ArrowTex)) tip1ArrowTex = PIXI.Texture.fromImage(tip1ArrowTex);
-    if (_.isString(tip2ArrowTex)) tip2ArrowTex = PIXI.Texture.fromImage(tip2ArrowTex);
+    if (_.isString(dot1Tex)) dot1Tex = PIXI.Texture.fromImage(x.cwd + dot1Tex);
+    if (_.isString(dot2Tex)) dot2Tex = PIXI.Texture.fromImage(x.cwd + dot2Tex);
+    if (_.isString(tip1Tex)) tip1Tex = PIXI.Texture.fromImage(x.cwd + tip1Tex);
+    if (_.isString(tip2Tex)) tip2Tex = PIXI.Texture.fromImage(x.cwd + tip2Tex);
+    if (_.isString(tip1ArrowTex)) tip1ArrowTex = PIXI.Texture.fromImage(x.cwd + tip1ArrowTex);
+    if (_.isString(tip2ArrowTex)) tip2ArrowTex = PIXI.Texture.fromImage(x.cwd + tip2ArrowTex);
     //console.time('Function #1');
     //console.timeEnd('Function #1'); 
 
