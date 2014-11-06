@@ -37,7 +37,7 @@
         pointMin : 0,     // Set the default min point. (lower points push this.)
         displayPointer : false,
         graphScale : 1,   // Does same thing as padding.
-        graphPadding : [60, 0, 50.5, 20],
+        graphPadding : [60, 0, 55.5, 20],
         data1 : [600, 500, 700, 900, 500, 700, 600, 900, 700],
         data2 : [200, 300, 100, 200, 50, 150, 300, 200, 300]
       };
@@ -116,6 +116,8 @@
     // Dot
     x.dot1.anchor.set(0.5, 0.5);// tex anchor point.
     x.dot2.anchor.set(0.5, 0.5);
+    x.dot1Offset = 0.5;
+    x.dot2Offset = 0.5;
 
     // Line
     x.line.beginFill('0x0b2659', 0.43);
@@ -137,8 +139,8 @@
     x.tip2Y = settings.h - 27; 
 
     // Add objects to stage.
-    x.stage.addChild(x.line1);
     x.stage.addChild(x.line2);
+    x.stage.addChild(x.line1);
     x.pointer.addChild(x.line);
     x.pointer.addChild(x.stand);
     x.pointer.addChild(x.dot1);
@@ -368,8 +370,8 @@
   p.drawLines = function(f) {
     var x = this;
     // Use nill values for the start of animation.
-    if (x.line2Active || f) x.drawLine(x.line2, x.data2Nill, x.ctp2Nill);
     if (x.line1Active || f) x.drawLine(x.line1, x.data1Nill, x.ctp1Nill);
+    if (x.line2Active || f) x.drawLine(x.line2, x.data2Nill, x.ctp2Nill);
   };
 
   p.drawLine = function(line, data, ctp) {
@@ -421,10 +423,13 @@
       data = x.data2;
       ctp  = x.ctp2;
     }
+
     // Set new point position.
     dataNill[i].y = y;
     // Grab percentage of new point position
     var percent = (y - low) / (data[i].y - low) * 100;
+    // When y = low, 0 / 0 is spawned.
+    if (isNaN(percent)) percent = 100;
     var last = data.length - 1;
 
     // Set new control point(s) position. (0 and up), (max and down)
@@ -692,8 +697,8 @@
 
       // Previously i did a func.call to keep it dry.
       x.pointer.position.x = data1[index].x;
-      x.dot1.position.y    = data1[index].y;
-      x.dot2.position.y    = data2[index].y;
+      x.dot1.position.y    = data1[index].y + x.dot1Offset;
+      x.dot2.position.y    = data2[index].y + x.dot2Offset;
       if (index === 0 || index === data1.length-1) x.changeTips(1);
 
     } else {
@@ -724,7 +729,7 @@
 
       animating.dot1y = new TWEEN
         .Tween({value: dot1y})
-        .to({value: data1[index].y}, 600)
+        .to({value: data1[index].y + x.dot1Offset}, 600)
         .easing(elasticOut)
         .onUpdate(function() { x.moveDot1(this.value); })
         .onComplete(function() {animating.dot1y = null;})
@@ -732,7 +737,7 @@
 
       animating.dot2y = new TWEEN
         .Tween({value: dot2y})
-        .to({value: data2[index].y}, 600)
+        .to({value: data2[index].y + x.dot2Offset}, 600)
         .easing(elasticOut)
         .onUpdate(function() { x.moveDot2(this.value); })
         .onComplete(function() {animating.dot2y = null;})
@@ -796,8 +801,8 @@
   };
 
   p.pointsToGraph = function() {
-    var x = this, i, graphlen, graphMid, graphHalf, val1, val2, 
-      percentage, percentage1, percentage2;
+    var x = this, i, graphlen, graphMid, graphHalf, 
+      percentage;
 
     var 
       h = x.h,
@@ -846,34 +851,31 @@
 
       // minus offset. Used for leveling data.
       data1[i] -= pointOffset;
-      val1 = data1[i];
+      data2[i] -= pointOffset;
 
       // Get percentage of point. 
       percentage = (data1[i] / pointRange) * 100; 
-      percentage1 = percentage;
-
+      // If no values
+      if (pointRange === 0) percentage = 0;
       // Flip percentages for inverted stage.
       percentage = 100 - percentage; 
-      percentage2 = percentage;
-
       // Get stage value from percentage.
       data1[i] = (percentage * graphRange) / 100;
-      val2 = data1[i];
-
       // Add back the graph percentage offset
-      data1[i] = Math.round(data1[i] + graphMax);
+      data1[i] = Math.round((data1[i] + graphMax) * 10) / 10 - 1;
 
 
-      // Get percentage of point.
+      // Get percentage of point. 
       percentage = (data2[i] / pointRange) * 100;
+      // If no values
+      if (pointRange === 0) percentage = 0;
       // Flip percentages for inverted stage.
       percentage = 100 - percentage; 
       // Get stage value from percentage.
       data2[i] = (percentage * graphRange) / 100;
       // Add back the graph percentage offset
-      data2[i] = Math.round(data2[i] + graphMax);
+      data2[i] = Math.round((data2[i] + graphMax) * 10) / 10 - 1;
     }
-    //console.log(data1, data2);
 
     // Return lowest graph point for animation.
     return graphMin;
