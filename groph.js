@@ -27,28 +27,25 @@
 
   // Constructor
   function Groph(settings) {
-    var x = this;
+    var x = this,
+      defaults = {
+        selector : '#graph1',
+        cwd: '',
+        w : 1008,
+        h : 365,
+        pointMax : false, // Set the default max point. (higher points push this.)
+        pointMin : 0,     // Set the default min point. (lower points push this.)
+        displayPointer : false,
+        graphScale : 1,   // Does same thing as padding.
+        graphPadding : [60, 0, 50.5, 20],
+        data1 : [600, 500, 700, 900, 500, 700, 600, 900, 700],
+        data2 : [200, 300, 100, 200, 50, 150, 300, 200, 300]
+      };
 
-    var defaults = {
-      selector : '#graph1',
-      cwd: '',
-      w : 1008,
-      h : 365,
-      pointMax : false, // Set the default max point. (higher points push this.)
-      pointMin : 0,     // Set the default min point. (lower points push this.)
-      displayPointer : false,
-      graphScale : 1,   // Does same thing as padding.
-      graphPadding : [60, 0, 50.5, 20],
-      data1 : [600, 500, 700, 900, 500, 700, 600, 900, 700],
-      data2 : [200, 300, 100, 200, 50, 150, 300, 200, 300]
-    };
-
-    settings = settings || {};
-    settings = _.extend(defaults, settings);
-
+    settings = $.extend({}, defaults, settings || {});
 
     // Class properties.
-
+    x.defaults  = defaults;
     x.tipTexWidth = 12; // This needs to be automated.
     x.selector  = settings.selector;
     x.target    = $(x.selector);
@@ -60,11 +57,11 @@
     x.pointMin  = settings.pointMin;
     x.displayPointer = settings.displayPointer;
     x.graphScale = settings.graphScale;
-    x.graphPadding = settings.graphPadding;
-    x.data1     = settings.data1;
-    x.data2     = settings.data2;
-    x._data1    = _.extend([], x.data1);
-    x._data2    = _.extend([], x.data2);
+    x.graphPadding = $.extend([], settings.graphPadding);
+    x.data1     = $.extend([], (!settings.data1)? defaults.data1: settings.data1);
+    x.data2     = $.extend([], (!settings.data2)? defaults.data2: settings.data2);
+    x._data1    = $.extend([], x.data1);
+    x._data2    = $.extend([], x.data2);
     x.ctp1      = [];
     x.ctp2      = [];
 
@@ -77,12 +74,12 @@
     // Constants
 
     Tween = TWEEN;
-    if (_.isString(dot1Tex)) dot1Tex = PIXI.Texture.fromImage(x.cwd + dot1Tex);
-    if (_.isString(dot2Tex)) dot2Tex = PIXI.Texture.fromImage(x.cwd + dot2Tex);
-    if (_.isString(tip1Tex)) tip1Tex = PIXI.Texture.fromImage(x.cwd + tip1Tex);
-    if (_.isString(tip2Tex)) tip2Tex = PIXI.Texture.fromImage(x.cwd + tip2Tex);
-    if (_.isString(tip1ArrowTex)) tip1ArrowTex = PIXI.Texture.fromImage(x.cwd + tip1ArrowTex);
-    if (_.isString(tip2ArrowTex)) tip2ArrowTex = PIXI.Texture.fromImage(x.cwd + tip2ArrowTex);
+    if (isString(dot1Tex)) dot1Tex = PIXI.Texture.fromImage(x.cwd + dot1Tex);
+    if (isString(dot2Tex)) dot2Tex = PIXI.Texture.fromImage(x.cwd + dot2Tex);
+    if (isString(tip1Tex)) tip1Tex = PIXI.Texture.fromImage(x.cwd + tip1Tex);
+    if (isString(tip2Tex)) tip2Tex = PIXI.Texture.fromImage(x.cwd + tip2Tex);
+    if (isString(tip1ArrowTex)) tip1ArrowTex = PIXI.Texture.fromImage(x.cwd + tip1ArrowTex);
+    if (isString(tip2ArrowTex)) tip2ArrowTex = PIXI.Texture.fromImage(x.cwd + tip2ArrowTex);
     //console.time('Function #1');
     //console.timeEnd('Function #1'); 
 
@@ -172,15 +169,20 @@
         console.log('selector returned nothing.');
         return;
       }
-      if (settings.data1) {
-        dataChanged = true;
-        x.data1  = settings.data1;
-        x._data1 = _.extend([], x.data1);
+      if (typeof settings.displayPointer !== 'undefined') {
+        x.displayPointer = settings.displayPointer;
       }
-      if (settings.data2) {
+      if (typeof settings.data1 !== 'undefined') {
         dataChanged = true;
-        x.data1  = settings.data2;
-        x._data2 = _.extend([], x.data2);
+        x.data1  = $.extend([], (!settings.data1)? x.defaults.data1: settings.data1);
+        x._data1 = $.extend([], x.data1);
+        x.ctp1   = [];
+      }
+      if (typeof settings.data2 !== 'undefined') {
+        dataChanged = true;
+        x.data2  = $.extend([], (!settings.data2)? x.defaults.data2: settings.data2);
+        x._data2 = $.extend([], x.data2);
+        x.ctp2   = [];
       }
       
       // Add view to DOM.
@@ -218,18 +220,18 @@
 
     // Duplicate data/ctp with a null y-axis to animate from.
     for (i=0, l=x.data1.length; i<l; i++) {
-      this.data1Nill.push({x:x.data1[i].x, y:this.lowest});
-      this.data2Nill.push({x:x.data2[i].x, y:this.lowest});
+      x.data1Nill.push({x:x.data1[i].x, y:x.lowest});
+      x.data2Nill.push({x:x.data2[i].x, y:x.lowest});
 
       if (i != (l-1)) {
-        this.ctp1Nill.push([
-          {x:this.ctp1[i][0].x, y:this.lowest}, 
-          {x:this.ctp1[i][1].x, y:this.lowest}
+        x.ctp1Nill.push([
+          {x:x.ctp1[i][0].x, y:x.lowest}, 
+          {x:x.ctp1[i][1].x, y:x.lowest}
         ]);
 
-        this.ctp2Nill.push([
-          {x:this.ctp2[i][0].x, y:this.lowest}, 
-          {x:this.ctp2[i][1].x, y:this.lowest}
+        x.ctp2Nill.push([
+          {x:x.ctp2[i][0].x, y:x.lowest}, 
+          {x:x.ctp2[i][1].x, y:x.lowest}
         ]);
       }
     }
@@ -263,7 +265,7 @@
   };
 
   p.remove = function() {
-    var i, x = this;
+    var i, key, obj, x = this;
 
      // Stop init delayers
     for (i=x.initDelays.length; i--;) 
@@ -279,9 +281,10 @@
     x.line2Active = false;
 
     // Stop anything else in motion.
-    _.each(x.animating, function(value, key) {
-      if (value) value.stop();
-    });
+    for (key in x.animating) {
+      obj = x.animating[key];
+      if (x.animating.hasOwnProperty(obj) && obj) obj.stop();
+    }
     
     // Stop tickers.
     for (i=x.tickers.length; i--;) 
@@ -388,10 +391,11 @@
 
       for (i=0, l=data.length; i<l; i++) {
         if (i>=(l-1)) continue;
+        //line.lineTo(data[i+1].x, data[i+1].y + off);
         line.bezierCurveTo(ctp[i][0].x, ctp[i][0].y + off, ctp[i][1].x, ctp[i][1].y + off,  data[i+1].x, data[i+1].y + off);
       }
 
-      lastPt = data.last();
+      lastPt = last(data);
       line.bezierCurveTo(lastPt.x, lastPt.y + off, lastPt.x, lastPt.y + off, lastPt.x, lastPt.y + off);
       line.lineTo(x.w + 10, lastPt.y + off);
       if (m === 0) {
@@ -605,14 +609,14 @@
     }
     
     // Line1 finsihed, stop calculating.
-    x.lineTweens1.last().onComplete(function() {
+    last(x.lineTweens1).onComplete(function() {
       x.line1Active = false;
     });
 
     // Line2 completed, stop ticker after one more render on
     // both lines for inactive tabs, otherwise the ticker 
     // would of never run if the user didn't look once.
-    x.lineTweens2.last().onComplete(function() {
+    last(x.lineTweens2).onComplete(function() {
       x.line1Active = true;
       x.line2Active = true;
       setTimeout(tween2Completed, 24);
@@ -772,9 +776,9 @@
     // Find ctrl points
     // Duplicate start & end for finding ct points.
     data1.unshift(data1[0]);
-    data1.push(data1.last());
+    data1.push(last(data1));
     data2.unshift(data2[0]);
-    data2.push(data2.last());
+    data2.push(last(data2));
 
     // Find control points for data.
     // Should catch 12 lines if there are 13 points.
@@ -819,10 +823,10 @@
 
     // Max and low points.
     var data = data1.concat(data2); 
-    if (_.isNumber(pointMax)) data.push(pointMax);
-    if (_.isNumber(pointMin)) data.push(pointMin);
-    pointMax = _.max(data);
-    pointMin = _.min(data);
+    if (isNumber(pointMax)) data.push(pointMax);
+    if (isNumber(pointMin)) data.push(pointMin);
+    pointMax = getMax(data);
+    pointMin = getMin(data);
 
     // Calc range and offsets for percentages.
     // note: graph is inverted so the highest value is the min.
@@ -978,11 +982,32 @@
     return ( a * Math.pow( 2, - 10 * k) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) + 1 );
   }
 
-  // Last supported?
-  if (!Array.prototype.last)
-    Array.prototype.last = function() {
-      return this[this.length-1];
-    };
+  function last(arr) {
+    return arr[arr.length-1];
+  }
+
+  function isNumber(num) {
+    return !isNaN(parseFloat(num)) && isFinite(num);
+  }
+
+  function isString(str) {
+    if (typeof str == 'string' || str instanceof String) return true;
+    else return false;
+  }
+
+  function getMin(arr) {
+    var result = Infinity;
+    for (var i=0, length=arr.length; i<length; i++) 
+      if (arr[i] < result) result = arr[i];
+    return result;
+  }
+
+  function getMax(arr) {
+    var result = -Infinity;
+    for (var i=0, length=arr.length; i<length; i++) 
+      if (arr[i] > result) result = arr[i];
+    return result;
+  }
 
   // Export to browser.
   window.Groph = Groph;

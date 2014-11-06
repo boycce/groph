@@ -20,12 +20,22 @@
 
 <script src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script src="../vendor/tween.min.js"></script>
-<script src="../vendor/underscore.min.js"></script>
 <script src="../vendor/pixi.min.js"></script>
 <script src="../groph.js"></script>
 <script>
 
-  var groph = new Groph();
+  var groph = new Groph({
+    cwd: 'imgs/',
+    data1: [1,2,3,4,3,5,6],
+    data2: [6,4,2,4,6,1,2]
+  });
+
+  setTimeout(function() {
+    groph.start({
+      data1: false,
+      data2: false
+    });
+  }, 5000);
 
 </script>
 </body>

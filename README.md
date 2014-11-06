@@ -1,6 +1,6 @@
 Groph
 ====
-Create sexy looking line graphs, built with the help of Pixi on the canvas element. Currently groph's API only supports line charts and a single style, but no doubt this will soon change. Made for [Sweet Invoice](http://sweetinvoice.com).
+Create sexy looking line graphs, built with the help of Pixi using the canvas element. Currently groph's API only supports line charts and a single style, but no doubt this will soon change. Made for [Sweet Invoice](http://sweetinvoice.com).
 
 ### Road Map ###
 
@@ -27,7 +27,6 @@ We would love for you to be apart of this project and in the journey of laying d
 Include on your page groph and its dependencies. I have compiled pixi with the bare necessities in under < 57kb. This is located inside the `vendors` directory. 
 ```html
 <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/tweenjs/0.5.1/tweenjs.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pixi.js/2.0.0/pixi.min.js"></script>
 <script src="../js/groph.min.js"></script>
