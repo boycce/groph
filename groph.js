@@ -885,6 +885,8 @@
     step = step || 5;
     
     var 
+    lowest = this.lowest-1, // All data is offsetted by 1 in pointsToGraph.
+    squishFlat = false,
     S1 = this.findControlPoints(s1, s2, s3),
     S2 = this.findControlPoints(s2, s3, s4),
 
@@ -901,13 +903,15 @@
       this.plotLine(s3, p3, '0xfc69f7');//pink
     }
 
-    if (squish !== false) {
+    // If its a flat line, squish more.
+    if (s2.y == lowest && s3.y == lowest) squishFlat = true;
 
+    if (squish !== false) {
       // 60 - 50 =  == 60 - 5 = 55
-      p2.x = s2.x - ((s2.x - p2.x) * squish);
-      p2.y = s2.y - ((s2.y - p2.y) * squish);
-      p3.x = s3.x - ((s3.x - p3.x) * squish);
-      p3.y = s3.y - ((s3.y - p3.y) * squish);
+      p2.x = s2.x - ((s2.x - p2.x) * ((squishFlat)? 0.1 : squish));
+      p2.y = s2.y - ((s2.y - p2.y) * ((squishFlat)? 0.1 : squish));
+      p3.x = s3.x - ((s3.x - p3.x) * ((squishFlat)? 0.1 : squish));
+      p3.y = s3.y - ((s3.y - p3.y) * ((squishFlat)? 0.1 : squish));
     }
     
     return [p2, p3];
