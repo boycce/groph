@@ -498,7 +498,7 @@
       tipArrow = new PIXI.Sprite(tip1ArrowTex);
       tip.position.y = -100;
       tipBG.beginFill('0x6ec0ea', 1); 
-      tipText.setText("$" + x._data1[dataIndex] + " profit");
+      tipText.setText("$" + x._data1[dataIndex]);
       tipArrow.position.y = 22;
     } else {
       x.tip2Box.addChild(tip);
@@ -507,7 +507,7 @@
       tipArrow = new PIXI.Sprite(tip2ArrowTex);
       tip.position.y = -100;
       tipBG.beginFill('0x90a5e8', 1);
-      tipText.setText("$" + x._data2[dataIndex] + " loss");
+      tipText.setText("$" + x._data2[dataIndex]);
       tipArrow.scale.y = -1;
       tipArrow.position.y = -6;
     }
