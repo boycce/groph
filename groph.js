@@ -33,6 +33,8 @@
         cwd: '',
         w : 1008,
         h : 365,
+        symbol: '$',
+        decimals : 2,
         pointMax : false, // Set the default max point. (higher points push this.)
         pointMin : 0,     // Set the default min point. (lower points push this.)
         displayPointer : false,
@@ -52,14 +54,16 @@
     x.cwd       = settings.cwd;
     x.w         = settings.w;
     x.h         = settings.h;
+    x.symbol    = settings.symbol;
+    x.decimals  = settings.decimals;
     x.cache     = settings.cache;
     x.pointMax  = settings.pointMax;
     x.pointMin  = settings.pointMin;
     x.displayPointer = settings.displayPointer;
     x.graphScale = settings.graphScale;
     x.graphPadding = $.extend([], settings.graphPadding);
-    x.data1     = $.extend([], (!settings.data1)? defaults.data1: settings.data1);
-    x.data2     = $.extend([], (!settings.data2)? defaults.data2: settings.data2);
+    x.data1     = $.extend([], (settings.data1)? forceFloat(settings.data1) : defaults.data1);
+    x.data2     = $.extend([], (settings.data2)? forceFloat(settings.data2) : defaults.data2);
     x._data1    = $.extend([], x.data1);
     x._data2    = $.extend([], x.data2);
     x.ctp1      = [];
@@ -176,13 +180,13 @@
       }
       if (typeof settings.data1 !== 'undefined') {
         dataChanged = true;
-        x.data1  = $.extend([], (!settings.data1)? x.defaults.data1: settings.data1);
+        x.data1  = $.extend([], (settings.data1)? forceFloat(settings.data1) : x.defaults.data1);
         x._data1 = $.extend([], x.data1);
         x.ctp1   = [];
       }
       if (typeof settings.data2 !== 'undefined') {
         dataChanged = true;
-        x.data2  = $.extend([], (!settings.data2)? x.defaults.data2: settings.data2);
+        x.data2  = $.extend([], (settings.data2)? forceFloat(settings.data2) : x.defaults.data2);
         x._data2 = $.extend([], x.data2);
         x.ctp2   = [];
       }
@@ -498,7 +502,7 @@
       tipArrow = new PIXI.Sprite(tip1ArrowTex);
       tip.position.y = -100;
       tipBG.beginFill('0x6ec0ea', 1); 
-      tipText.setText("$" + x._data1[dataIndex]);
+      tipText.setText(x.symbol + x._data1[dataIndex].toFixed(x.decimals));
       tipArrow.position.y = 22;
     } else {
       x.tip2Box.addChild(tip);
@@ -507,7 +511,7 @@
       tipArrow = new PIXI.Sprite(tip2ArrowTex);
       tip.position.y = -100;
       tipBG.beginFill('0x90a5e8', 1);
-      tipText.setText("$" + x._data2[dataIndex]);
+      tipText.setText(x.symbol + x._data2[dataIndex].toFixed(x.decimals));
       tipArrow.scale.y = -1;
       tipArrow.position.y = -6;
     }
@@ -990,6 +994,12 @@
 
   function last(arr) {
     return arr[arr.length-1];
+  }
+
+  function forceFloat(array) {
+    for (var i = array.length; i--;)
+      array[i] = parseFloat(array[i]);
+    return array;
   }
 
   function isNumber(num) {
