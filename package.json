@@ -1,6 +1,6 @@
 {
   "name": "groph",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "description": "Sexy line graphs built on-top of pixi's super fast canvas renderer.",
 
   "author": "Ricky Boyce",

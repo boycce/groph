@@ -1,122 +1,90 @@
 /*
-    Groph.js 0.7
+    Groph.js 1.0
 
     (c) 2014 Ricky Boyce.
     Groph may be freely distributed under the MIT license.
     For all details and documentation: https://github.com/boyyce/groph
 */
 
-(function() {
+(function(window, Tween) {
 
   "use strict";
 
-  var Tween,
-    showConstruct = false,
-    p = Groph.prototype,
-
-    // Load textures once.
-    dot1Tex  = "dot-profit.png",
-    dot2Tex  = "dot-loss.png",
-    tip1Tex  = "tooltip-profit.png",
-    tip2Tex  = "tooltip-loss.png",
-    tip1ArrowTex = "tooltip-arrow-profit.png",
-    tip2ArrowTex = "tooltip-arrow-loss.png";
+  var p = (function(){ return Groph.prototype; })();
 
 
   // --- Public Methods ----------------------------
 
   // Constructor
   function Groph(settings) {
-    var x = this,
-      defaults = {
-        selector : '#graph1',
-        cwd: '',
-        w : 1008,
-        h : 365,
-        symbol: '$',
-        decimals : 2,
-        pointMax : false, // Set the default max point. (higher points push this.)
-        pointMin : 0,     // Set the default min point. (lower points push this.)
-        displayPointer : false,
-        graphScale : 1,   // Does same thing as padding.
-        graphPadding : [60, 0, 55.5, 20],
-        data1 : [600, 500, 700, 900, 500, 700, 600, 900, 700],
-        data2 : [200, 300, 100, 200, 50, 150, 300, 200, 300]
-      };
-
-    settings = $.extend({}, defaults, settings || {});
-
-    // Class properties.
-    x.defaults  = defaults;
-    x.tipTexWidth = 12; // This needs to be automated.
-    x.selector  = settings.selector;
-    x.target    = $(x.selector);
-    x.cwd       = settings.cwd;
-    x.w         = settings.w;
-    x.h         = settings.h;
-    x.symbol    = settings.symbol;
-    x.decimals  = settings.decimals;
-    x.cache     = settings.cache;
-    x.pointMax  = settings.pointMax;
-    x.pointMin  = settings.pointMin;
-    x.displayPointer = settings.displayPointer;
-    x.graphScale = settings.graphScale;
-    x.graphPadding = $.extend([], settings.graphPadding);
-    x.data1     = $.extend([], (settings.data1)? forceFloat(settings.data1) : defaults.data1);
-    x.data2     = $.extend([], (settings.data2)? forceFloat(settings.data2) : defaults.data2);
-    x._data1    = $.extend([], x.data1);
-    x._data2    = $.extend([], x.data2);
-    x.ctp1      = [];
-    x.ctp2      = [];
-
-    if (!x.target.length) {
-      console.log('selector returned nothing.');
-      return;
-    }
-
-
-    // Constants
-
+    var x = this;
     Tween = TWEEN;
-    if (isString(dot1Tex)) dot1Tex = PIXI.Texture.fromImage(x.cwd + dot1Tex);
-    if (isString(dot2Tex)) dot2Tex = PIXI.Texture.fromImage(x.cwd + dot2Tex);
-    if (isString(tip1Tex)) tip1Tex = PIXI.Texture.fromImage(x.cwd + tip1Tex);
-    if (isString(tip2Tex)) tip2Tex = PIXI.Texture.fromImage(x.cwd + tip2Tex);
-    if (isString(tip1ArrowTex)) tip1ArrowTex = PIXI.Texture.fromImage(x.cwd + tip1ArrowTex);
-    if (isString(tip2ArrowTex)) tip2ArrowTex = PIXI.Texture.fromImage(x.cwd + tip2ArrowTex);
-    //console.time('Function #1');
-    //console.timeEnd('Function #1'); 
 
+    x.defaults = {
+      selector : 'graph1',
+      cwd: 'imgs/',
+      w : 1008,
+      h : 365,
+      symbol: '$',
+      decimals : 2,
+      pointMax : false, // Set the default max point. (higher points push this.)
+      pointMin : 0,     // Set the default min point. (lower points push this.)
+      displayPointer : false,
+      graphScale : 1,   // Does same thing as padding.
+      graphPadding : [60, 0, 55.5, 20],
+      data1 : [600, 500, 700, 900, 500, 700, 600, 900, 700],
+      data2 : [200, 300, 100, 200, 50, 150, 300, 200, 300],
+      anim  : true,
+      smoothing : 0.8,
+
+      color1 : [0x8fd1f4, 0x56adff, 0x6ec0ea], // line, fill, tip
+      color2 : [0xafb8f8, 0xafb8f8, 0x90a5e8], // line, fill, tip
+      shadow : 0x7d8fc2,
+      colorLine : 0x0b2659,
+
+      dot1File : "dot1.png",
+      dot2File : "dot2.png",
+      showConstruct : false
+    };
+
+    // Parsing of settings fails.
+    if (!x.settings(settings, true)) return;
 
 
     // --- Graph Setup--------------------------------
 
-    // Create stage & renderer instances.
-    // Add renderer view to the DOM. CanvasRenderer
-    x.stage = new PIXI.Stage(0x66FF99);
-    x.renderer = new PIXI.CanvasRenderer(this.w + 1, this.h, false, true);
-    x.target.html(x.renderer.view);
+    // Create renderer and add to the DOM.
+    x.renderer = new PIXI.CanvasRenderer(x.w, x.h, {transparent: true});
+    x.target.appendChild(x.renderer.view);
 
-    x.line1 = new PIXI.Graphics(); 
-    x.line2 = new PIXI.Graphics(); 
+    // Listen to window resizing.
+    x.resizeBinded = window.throttle.call(this, 20, x.resize);
+    window.addEventListener('resize', x.resizeBinded);
+    
     x.line1Active = false;
     x.line2Active = false;
-    x.defaultIndex = Math.round((x.data1.length-1) / 2);
-    x.line1.colorsRB = [0x8fd1f4, 0x56adff];
-    x.line2.colorsRB = [0xafb8f8, 0xafb8f8];
-      
-    x.pointer  = new PIXI.DisplayObjectContainer(); 
-    x.line     = new PIXI.Graphics();
-    x.stand    = new PIXI.Graphics();
-    x.dot1     = new PIXI.Sprite(dot1Tex);
-    x.dot2     = new PIXI.Sprite(dot2Tex);
-    x.tip1Box  = new PIXI.DisplayObjectContainer(); 
-    x.tip2Box  = new PIXI.DisplayObjectContainer(); 
+    
+    x.stage   = new PIXI.Container();
+    x.line1   = new PIXI.Graphics(); 
+    x.line2   = new PIXI.Graphics(); 
+    x.pointer = new PIXI.Container(); 
+    //x.pbg     = new PIXI.Graphics();
+    x.line    = new PIXI.Graphics();
+    x.stand   = new PIXI.Graphics();
+    x.dot1    = new PIXI.Sprite();
+    x.dot2    = new PIXI.Sprite();
+    x.tip1Box = new PIXI.Container(); 
+    x.tip2Box = new PIXI.Container(); 
 
 
     // Pointer start alpha
     x.pointer.alpha = 0;
 
+    // Pointer BG
+    //x.pbg.beginFill('0x0b2659', 0.13);
+    //x.pbg.drawRect(-50, 0, 100, x.h);
+    //x.pbg.endFill();
+    
     // Dot
     x.dot1.anchor.set(0.5, 0.5);// tex anchor point.
     x.dot2.anchor.set(0.5, 0.5);
@@ -124,28 +92,28 @@
     x.dot2Offset = 0.5;
 
     // Line
-    x.line.beginFill('0x0b2659', 0.43);
-    x.line.drawRect(0, 0, 1, settings.h); 
+    x.line.beginFill(x.colorLine, 0.43);
+    x.line.drawRect(0, 0, 1, x.h); 
     x.line.endFill();
 
     // Create stand.
-    x.stand.beginFill('0x0b2659', 0.43);
-    x.stand.drawRect(-12, settings.h-1, 24, 1); 
+    x.stand.beginFill(x.colorLine, 0.43);
+    x.stand.drawRect(-12, 0, 24, 4); 
     x.stand.endFill();
+    x.stand.y = x.h-1;
 
     // Tip containers
     x.tip1Box.pivot.set(0.5, 0.5);
     x.tip2Box.pivot.set(0.5, 0.5);
 
-
-    // Object settings.
-    x.tip1Y = 13;
-    x.tip2Y = settings.h - 27; 
+    // Tooltips
+    x.drawTooltips();
 
     // Add objects to stage.
     x.stage.addChild(x.line2);
     x.stage.addChild(x.line1);
     x.pointer.addChild(x.line);
+    //x.pointer.addChild(x.pbg);
     x.pointer.addChild(x.stand);
     x.pointer.addChild(x.dot1);
     x.pointer.addChild(x.dot2);
@@ -154,162 +122,252 @@
     x.stage.addChild(x.pointer);
 
 
-    x.init = true;
-    x.start();
+    x.dataChanged = true;
+    x.setup();
   }
 
-  p.start = function(settings) {
-    var i, l, x = this, dataChanged;
+  // Remakes graph
+  p.remake = function(settings) {
+    var x = this;
 
-    // Not init & graph has not been removed.
-    if (!x.init && x.target) x.remove();
+    // Remove previous charts
+    if (x.target) x.remove();
 
-    // Graph has been removed.
-    if (!x.target) {
-      // New parameters passed.
-      settings = settings || {};
-      x.selector = settings.selector || x.selector;
-      x.target = $(x.selector);
+    // Parsing of settings fails.
+    if (!x.settings(settings)) return;
 
-      if (!x.target.length) {
-        console.log('selector returned nothing.');
-        return;
-      }
-      if (typeof settings.displayPointer !== 'undefined') {
-        x.displayPointer = settings.displayPointer;
-      }
-      if (typeof settings.data1 !== 'undefined') {
-        dataChanged = true;
-        x.data1  = $.extend([], (settings.data1)? forceFloat(settings.data1) : x.defaults.data1);
-        x._data1 = $.extend([], x.data1);
-        x.ctp1   = [];
-      }
-      if (typeof settings.data2 !== 'undefined') {
-        dataChanged = true;
-        x.data2  = $.extend([], (settings.data2)? forceFloat(settings.data2) : x.defaults.data2);
-        x._data2 = $.extend([], x.data2);
-        x.ctp2   = [];
-      }
-      
-      // Add view to DOM.
-      x.target.html(x.renderer.view);
+    // Re create tooltips.
+    x.drawTooltips();
+
+    // Add view to DOM.
+    x.target.appendChild(x.renderer.view);
+    window.addEventListener('resize', x.resizeBinded);
+
+    // Proceed to setup.
+    x.setup();
+  };
+
+  // Reizes graph
+  p.resize = function() {
+    var x = this;
+    var w = x.target.offsetWidth;
+    var h = x.target.offsetHeight;
+
+    // Current dimensions are maxed
+    if (x.w == x._w && x.h == x._h) 
+
+      // New dimensions are maxed
+      if (w == x._w && h == x._h) return;
+
+    x.w = w;
+    x.h = h;
+    
+    // this part resizes the canvas but keeps ratio the same
+    //x.renderer.view.style.width = w + 'px';
+    //x.renderer.view.style.height = h + 'px';
+
+    // this part adjusts the ratio:
+    x.renderer.resize(w, h);
+
+    // Remove  pointer
+    x.removeAnimations();
+
+    // Submit data values.
+    x.data1 = $.extend([], x._data1);
+    x.data2 = $.extend([], x._data2);
+    x.dataChanged = true;
+    x.anim = false;
+    x.setup();
+  };
+
+
+  // --- Inital Methods ----------------------------
+
+  // Parses settings
+  p.settings = function(settings, init) {
+    var x = this;
+    $.extend(x, x.defaults, settings || {});
+
+    // Find parent element
+    if (!findElement.call(this)) return false;
+
+    // Class properties.
+    x._w = x.w;
+    x._h = x.h;
+    x.w  = x.target.offsetWidth;
+    x.h  = x.target.offsetHeight;
+    x.graphPadding = $.extend([], x.graphPadding);
+    x.data1  = $.extend([], forceFloat(x.data1));
+    x.data2  = $.extend([], forceFloat(x.data2));
+    x._data1 = $.extend([], x.data1);
+    x._data2 = $.extend([], x.data2);
+    if (settings.data1 || settings.data2) x.dataChanged = true;
+
+    // Textures
+    if (settings.dot1File || settings.cwd || init) {
+      if (x.dot1Tex) x.dot1Tex.destroy(1);
+      x.dot1Tex = PIXI.Texture.fromImage(x.cwd + x.dot1File);
+    }
+    if (settings.dot1File || settings.cwd || init) {
+      if (x.dot2Tex) x.dot2Tex.destroy(1);
+      x.dot2Tex = PIXI.Texture.fromImage(x.cwd + x.dot2File);
     }
 
-    // Init or new data passed.
-    if (x.init || dataChanged) {
-      x.removeTooltips();
-      x.dataConversion();
+    return true;
+  };
 
-      // Create all tips
-      x.allTips1 = [];
-      x.allTips2 = [];
-      x.currentTipIndex = false;
-      for (i=0, l=x.data1.length; i<l; i++) {
-        x.allTips1.push(x.drawTooltip(1, i));
-        x.allTips2.push(x.drawTooltip(2, i));
-      }
-    }
+  // Setups data and inital animation / tickers.
+  p.setup = function() {
+    var i, l, x = this;
 
-    // Tracking & Default positions.
-    x.init = false;
+    // Tracking animation & tickers
     x.tickers = [];
     x.initDelays = [];
-    x.lineTweens1 = []; 
+    x.lineTweens1 = [];
     x.lineTweens2 = [];
     x.animating = {};
     x.stageMouseOver = false; 
     x.pointerGo = false;
+
+    // Data
     x.data1Nill = [];
     x.data2Nill = [];
     x.ctp1Nill  = [];
     x.ctp2Nill  = [];
 
-    // Duplicate data/ctp with a null y-axis to animate from.
-    for (i=0, l=x.data1.length; i<l; i++) {
-      x.data1Nill.push({x:x.data1[i].x, y:x.lowest});
-      x.data2Nill.push({x:x.data2[i].x, y:x.lowest});
+    // Textures updated?
+    x.dot1.texture = x.dot1Tex;
+    x.dot2.texture = x.dot2Tex;
 
-      if (i != (l-1)) {
-        x.ctp1Nill.push([
-          {x:x.ctp1[i][0].x, y:x.lowest}, 
-          {x:x.ctp1[i][1].x, y:x.lowest}
-        ]);
-
-        x.ctp2Nill.push([
-          {x:x.ctp2[i][0].x, y:x.lowest}, 
-          {x:x.ctp2[i][1].x, y:x.lowest}
-        ]);
-      }
+    // Data has changed
+    if (x.dataChanged) {
+      x.ctp1 = [];
+      x.ctp2 = [];
+      x.dataChanged = false;
+      x.columnWidth  = Math.round(x.w / (x.data1.length-1));
+      x.defaultIndex = Math.round((x.data1.length-1) / 2);
+      x.dataConversion();
     }
 
-    // Draw first line.
-    x.drawLines(true);
 
-    // Setup interative pointer.
+    // --- Pointer setup ------------
+
+    // Adjust pointer's height
+    x.line.height = x.h;
+    x.stand.y = x.h - 1; 
+    x.tip1Y = 5; // 4 from top
+    x.tip2Y = x.h - 36; // 5 from bottom
+
+    // Setup interactive pointer.
     x.interactivePointer();
 
     // Start interactive ticker.
-    x.tickers.push(requestAnimFrame(function(){ x.interactiveTicker(); }));
+    x.tickers.push(requestAnimationFrame(function(){ x.interactiveTicker(); }));
     x.interactiveTickerI = x.tickers.length - 1;
 
-    // Start line tweens!
-    x.initDelays.push( setTimeout(function() { 
-      x.initDelays.splice(0, 1);
-      x.startLineTweens(); 
-    }, 500));
+    var pointerDelay = x.anim? 1500 : 200;
 
-    // Auto show pointer.
-    x.initDelays.push(setTimeout(function() {
-      x.initDelays.splice(1, 1);
+    // Display pointer
+    x.initDelays.push( setTimeout(function() {
+      x.initDelays.splice(0, 1);
       x.pointerGo = true;
       if (x.displayPointer) {
         x.showPointerTween();
         x.movePointerTween({indexRB: x.defaultIndex});
       }
       else if (x.stageMouseOver) x.showPointerTween();
-    }, 1500));
+    }, pointerDelay));
+
+
+    // --- Lines setup ------------
+
+    // No animation
+    if (!x.anim) {
+      x.data1Nill = x.data1;
+      x.data2Nill = x.data2;
+      x.ctp1Nill  = x.ctp1;
+      x.ctp2Nill  = x.ctp2;
+
+      // Draw inital lines.
+      x.drawLines(true);
+
+    } else {
+
+      // Animation. Duplicate data/ctp with a null y-axis to animate from.
+      for (i=0, l=x.data1.length; i<l; i++) {
+        x.data1Nill.push({x:x.data1[i].x, y:x.lowest});
+        x.data2Nill.push({x:x.data2[i].x, y:x.lowest});
+
+        if (i != (l-1)) {
+          x.ctp1Nill.push([
+            {x:x.ctp1[i][0].x, y:x.lowest}, 
+            {x:x.ctp1[i][1].x, y:x.lowest}
+          ]);
+
+          x.ctp2Nill.push([
+            {x:x.ctp2[i][0].x, y:x.lowest}, 
+            {x:x.ctp2[i][1].x, y:x.lowest}
+          ]);
+        }
+      }
+
+      // Draw inital lines.
+      x.drawLines(true);
+      
+      // Start line tweens!
+      x.initDelays.push( setTimeout(function() { 
+        x.initDelays.splice(1, 1);
+        x.startLineTweens();
+      }, 500));
+    }
   };
 
+  // Removes graph  
   p.remove = function() {
+    var x = this;
+
+    this.removeTooltips();
+    this.removeAnimations();
+
+    // Remove dom link and data?
+    x.target.innerHTML = "";
+    x.target = null;
+    window.removeEventListener('resize', x.resizeBinded);
+  };
+
+  // Removes animation
+  p.removeAnimations = function() {
     var i, key, obj, x = this;
 
-     // Stop init delayers
+    // Stop init delayers
     for (i=x.initDelays.length; i--;) 
       clearTimeout(x.initDelays[i]);
 
-    // Stop line1/2 init animations.
+    // Stop line1 & line2 init animations.
     for (i=x.lineTweens1.length; i--;) 
       x.lineTweens1[i].stop();
     for (i=x.lineTweens2.length; i--;) 
       x.lineTweens2[i].stop();
 
-    x.line1Active = false;
-    x.line2Active = false;
-
-    // Stop anything else in motion.
+    // Stop anything else in motion. (pointer elements)
     for (key in x.animating) {
       obj = x.animating[key];
       if (x.animating.hasOwnProperty(obj) && obj) obj.stop();
     }
-    
+
+
     // Stop tickers.
     for (i=x.tickers.length; i--;) 
-      cancelAnimationFrame(x.tickers[i]);
+      if (x.tickers[i])
+        cancelAnimationFrame(x.tickers[i]);
     x.tickers = null;
+
 
     // Remove pointer
     x.removeInteractivePointer();
 
-    // Remove dom link and jquery data.
-    x.target.removeData();
-    x.target.empty();
-    x.target = null;
-  };
-
-  p.destroy = function() {
-    this.removeTooltips();
-    this.remove();
-    this.stage.interactionManager.removeEvents();
+    x.line1Active = false;
+    x.line2Active = false;
   };
 
 
@@ -319,7 +377,7 @@
     var x = this, xpos, i, l, width, box, 
     half = Math.round(this.columnWidth / 2);
 
-    x.boxes = new PIXI.DisplayObjectContainer(); 
+    x.boxes = new PIXI.Container(); 
 
     function movePointerTween(data) {
       x.movePointerTween(data);
@@ -335,6 +393,9 @@
       // Finding cordianants.
       if (i === 0) {
         xpos = 0;
+        width = half;
+      } else if (i == l-1) {
+        xpos = ((i - 1) * x.columnWidth) + half;
         width = half;
       } else {
         xpos = ((i - 1) * x.columnWidth) + half;
@@ -354,17 +415,19 @@
     }
     
     // Stage interaction
-    x.stage.mouseover = showPointerTween;
-    x.stage.mouseout  = hidePointerTween;
-    x.stage.interactive = true;
+    x.boxes.mouseover = showPointerTween;
+    x.boxes.mouseout  = hidePointerTween;
+    x.boxes.interactive = true;
     x.stage.addChild(x.boxes);
   };
 
   p.removeInteractivePointer = function() {
     var x = this;
+    x.boxes.interactive = false;
+    x.displayPointer = false;
+    this.pointerGo = false;
     x.stage.removeChild(x.boxes);
     x.showHidePointer(0);
-    x.stage.interactive = false;
     //console.log(x.stage.interactionManager);
   };
 
@@ -374,24 +437,26 @@
   p.drawLines = function(f) {
     var x = this;
     // Use nill values for the start of animation.
-    if (x.line1Active || f) x.drawLine(x.line1, x.data1Nill, x.ctp1Nill);
-    if (x.line2Active || f) x.drawLine(x.line2, x.data2Nill, x.ctp2Nill);
+    if (x.line1Active || f) x.drawLine(1, x.data1Nill, x.ctp1Nill);
+    if (x.line2Active || f) x.drawLine(2, x.data2Nill, x.ctp2Nill);
   };
 
-  p.drawLine = function(line, data, ctp) {
+  p.drawLine = function(num, data, ctp) {
     var x = this, i, l, m, off, lastPt;
+    var line = x['line' + num];
+
     line.clear();
 
     for (m=2; m--;) {
       if (m === 0) {
         off = 0;
-        line.lineStyle(5, line.colorsRB[0], 1);
-        line.beginFill(line.colorsRB[1], 0.15);
+        line.lineStyle(5, x['color' + num][0], 1);
+        line.beginFill(x['color' + num][1], 0.15);
         line.moveTo(-10, x.h + 10);
         line.lineTo(-10, data[0].y + off);
       } else {
         off = 1;
-        line.lineStyle(5, '0x7d8fc2', 1);
+        line.lineStyle(5, x.shadow, 1);
         line.moveTo(-10, data[0].y + off);
       }
 
@@ -441,6 +506,8 @@
     if (i !== 0)  ctpNill[i-1][1].y = (percent * (ctp[i-1][1].y-low) / 100)  + low; // Add back low.
   };
 
+  // Pointer
+
   p.showHidePointer = function(value) {
     this.pointer.alpha = value;
 
@@ -470,84 +537,66 @@
     this.dot2.position.y = value;
   };
 
-  p.changeTips = function(value) {
-    var x = this, half1, half2, index = this.currentTipIndex;
-    var width1 = x.allTips1[index].width;
-    var width2 = x.allTips2[index].width;
+  p.drawTooltips = function() {
+    var i, l, x = this;
 
-    half1 = Math.round(width1 / 2);
-    half2 = Math.round(width2 / 2);
-
-    if (index === 0) {
-      // start(-200) - (-200 * 0.6)
-      x.allTips1[index].position.x = -half1 - (-half1 * value);
-      x.allTips2[index].position.x = -half2 - (-half2 * value);
-    } else {
-      x.allTips1[index].position.x = (-width1 + (x.tipTexWidth*2)) + (half1 - (half1 * value));
-      x.allTips2[index].position.x = (-width2 + (x.tipTexWidth*2)) + (half2 - (half2 * value));
+    x.allTips1 = [];
+    x.allTips2 = [];
+    x.currentTipIndex = false;
+    for (i=0, l=x.data1.length; i<l; i++) {
+      x.allTips1.push(x.drawTooltip(1, i));
+      x.allTips2.push(x.drawTooltip(2, i));
     }
   };
 
-  p.drawTooltip = function(type, dataIndex) {
-    var x = this, tipLeft, tipRight, tipArrow, 
-      tipPadding = 12,
-      tip     = new PIXI.DisplayObjectContainer(),
-      tipBG   = new PIXI.Graphics(),
-      tipText = new PIXI.Text("", {font:"13px Arial", fill:"white"});
+  p.drawTooltip = function(num, dataIndex) {
+    var x = this, width, half,
+      padding = [22, 8],
+      color = x['color' + num][2],
+      tip   = new PIXI.Container(),
+      bg    = new PIXI.Graphics(),
+      arrow = new PIXI.Graphics(),
+      text  = new PIXI.Text("", {font:"13px Arial", fill:"white"});
 
-    if (type == 1) {
-      x.tip1Box.addChild(tip);
-      tipLeft  = new PIXI.Sprite(tip1Tex);
-      tipRight = new PIXI.Sprite(tip1Tex);
-      tipArrow = new PIXI.Sprite(tip1ArrowTex);
-      tip.position.y = -100;
-      tipBG.beginFill('0x6ec0ea', 1); 
-      tipText.setText(x.symbol + x._data1[dataIndex].toFixed(x.decimals));
-      tipArrow.position.y = 22;
-    } else {
-      x.tip2Box.addChild(tip);
-      tipLeft  = new PIXI.Sprite(tip2Tex);
-      tipRight = new PIXI.Sprite(tip2Tex);
-      tipArrow = new PIXI.Sprite(tip2ArrowTex);
-      tip.position.y = -100;
-      tipBG.beginFill('0x90a5e8', 1);
-      tipText.setText(x.symbol + x._data2[dataIndex].toFixed(x.decimals));
-      tipArrow.scale.y = -1;
-      tipArrow.position.y = -6;
-    }
-    
-    // Tip text
-    var tipWidth = tipText.width;
-    tipText.position.x = tipPadding;
-    
+    // Text
+    text.text = x.symbol + x["_data" + num][dataIndex].toFixed(x.decimals);
+    text.x = padding[0];
+    text.y = padding[1];
+
+    // BG
+    bg.beginFill(color, 1); 
+    bg.drawRoundedRect(0, 0, text.width + (padding[0] * 2), text.height + (padding[1] * 2), 3);
+    bg.endFill();
+    width = bg.width;
+    half = Math.round(bg.width / 2);
+
+    // Arrow
+    arrow.beginFill(color, 1); 
+    arrow.drawPolygon([0,0, 17,0, 9,7]);
+    arrow.x = half - 8;
+    arrow.y = (num == 1)? bg.height : 0;
+    arrow.scale.y = (num == 1)? 1 : -1;
+
     // Tip
+    tip.y = -100;
     tip.pivot.set(0.5, 0.5);
-    tip.position.x = - (Math.round(tipWidth / 2) + tipPadding - 1);
-
-    // Tip BG.
-    tipBG.drawRect(0, -8, tipWidth + (tipPadding * 2), 31); 
-    tipBG.endFill();
-
-    // Tip sides.
-    tipLeft.position.set(-tipPadding + 1, -9);
-    tipRight.position.set(tipWidth - 1 + (tipPadding * 3), -9);
-    tipRight.scale.x = -1;
-
-    // Tip arrow x
-    tipArrow.position.x = (Math.round(tipWidth / 2) + tipPadding) - 8;
+    tip.x = tip.originalx = -half + 1;
 
     // First and last tooltips.
     if (dataIndex === 0) {
-      tipArrow.position.x -= Math.round(tipWidth / 2) + tipPadding;
+      tip.x = tip.originalx = -Math.round(padding[0] / 2);
+      arrow.x = 3;
+
     } else if (dataIndex === x.data1.length-1) {
-      tipArrow.position.x += Math.round(tipWidth / 2) + tipPadding;
+      tip.x = tip.originalx = -width + Math.round(padding[0] / 2);
+      arrow.x = (width - Math.round(padding[0] / 2)) - 7;
     }
 
-    tip.addChild(tipBG);
-    tip.addChild(tipLeft);
-    tip.addChild(tipRight);
-    tip.addChild(tipArrow);
-    tip.addChild(tipText);
+    tip.addChild(bg);
+    tip.addChild(arrow);
+    tip.addChild(text);
+
+    x["tip"+ num +"Box"].addChild(tip);
     return tip;
   };
 
@@ -572,9 +621,28 @@
         this.tip2Box.removeChild(this.allTips2[i]);
       }
   };
+
+  p.changeTips = function(value) {
+    // @value = percent animated
+    // This only gets called on first and last tips
+
+    var tip1 = this.allTips1[this.currentTipIndex];
+    var tip2 = this.allTips2[this.currentTipIndex];
+    var half1 = Math.round(tip1.width / 2),
+      half2 = Math.round(tip2.width / 2);
+
+    if (this.currentTipIndex === 0) {
+      tip1.x = tip1.originalx - (half1 - (half1 * value));
+      tip2.x = tip2.originalx - (half2 - (half2 * value));
+
+    } else {
+      tip1.x = tip1.originalx + (half1 - (half1 * value));
+      tip2.x = tip2.originalx + (half2 - (half2 * value));
+    }
+  };
   
 
-  // --- Animation & Tickers ----------------------
+  // --- Animation ------------------------------
 
   p.startLineTweens = function() {
     var x = this, i, l, tween1, tween2;
@@ -589,6 +657,7 @@
       x.line2Active = true;
     };
     var tween2Completed = function() {
+      if (!x.tickers[x.initTicker]) return;
       cancelAnimationFrame(x.tickers[x.initTickerI]);
       x.tickers[x.initTickerI] = null;
     };
@@ -632,7 +701,7 @@
     });
 
     // Start init ticker.
-    x.tickers.push(requestAnimFrame(function() { x.initTicker(); }));
+    x.tickers.push(requestAnimationFrame(function() { x.initTicker(); }));
     x.initTickerI = x.tickers.length-1;
   };
 
@@ -654,7 +723,7 @@
     // Stop prev animation.
     if (x.animating.pointer) x.animating.pointer.stop();
     if (x.animating.dots) x.animating.dots.stop();
-    if (show) to = 1; 
+    if (show) to = 1;
     else to = 0;
     
     x.animating.pointer = new Tween
@@ -662,7 +731,7 @@
       .to({value: to}, 250)
       .easing(TWEEN.Easing.Quadratic.InOut)
       .onUpdate(function() { x.showHidePointer(this.value); })
-      .onComplete(function() {x.animating.pointer = null;})
+      .onComplete(function() { x.animating.pointer = null; })
       .start();
 
     x.animating.dots = new Tween
@@ -670,7 +739,7 @@
       .to({value: to}, (show)? 600 : 300)
       .easing((show)? TWEEN.Easing.Elastic.Out : TWEEN.Easing.Quadratic.InOut)
       .onUpdate(function() { x.showHideDots(this.value); })
-      .onComplete(function() {x.animating.dots = null;})
+      .onComplete(function() { x.animating.dots = null; })
       .start();
   };
 
@@ -687,22 +756,24 @@
 
     // Exchanging tooltips instantly.
     if (x.currentTipIndex !== false) {
-      x.allTips1[x.currentTipIndex].position.y = -100;
-      x.allTips2[x.currentTipIndex].position.y = -100;
+      x.allTips1[x.currentTipIndex].y = -100;
+      x.allTips2[x.currentTipIndex].y = -100;
     }
     x.currentTipIndex = index;
     if (!x.displayPointer) {
-      x.allTips1[index].position.y = x.tip1Y;
-      x.allTips2[index].position.y = x.tip2Y;
+      x.allTips1[index].y = x.tip1Y;
+      x.allTips2[index].y = x.tip2Y;
     }
 
     // Pointer is completly hidden.
     if (x.pointer.alpha === 0) {
 
       // Previously i did a func.call to keep it dry.
-      x.pointer.position.x = data1[index].x;
-      x.dot1.position.y    = data1[index].y + x.dot1Offset;
-      x.dot2.position.y    = data2[index].y + x.dot2Offset;
+      x.pointer.x = data1[index].x;
+      x.dot1.y    = data1[index].y + x.dot1Offset;
+      x.dot2.y    = data2[index].y + x.dot2Offset;
+
+      // Default positions if moved
       if (index === 0 || index === data1.length-1) x.changeTips(1);
 
     } else {
@@ -713,13 +784,14 @@
       if (animating.dot2y) animating.dot2y.stop();
       if (animating.tips) animating.tips.stop();
 
+      // Animate between first / last tips
       if (index === 0 || index === data1.length-1) 
         animating.tips = new TWEEN
           .Tween({value: 0})
           .to({value: 1}, 300)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onUpdate(function() { x.changeTips(this.value); })
-          .onComplete(function() {animating.tips = null;})
+          .onComplete(function() { animating.tips = null; })
           .start();
 
       
@@ -749,15 +821,18 @@
     } 
   };
 
+
+  // --- Tickers --------------------------------
+
   p.initTicker = function(time) {
     var x = this;
-    x.tickers[x.initTickerI] = requestAnimFrame(function() { x.initTicker(); });
+    x.tickers[x.initTickerI] = requestAnimationFrame(function() { x.initTicker(); });
     x.drawLines();
   };
 
   p.interactiveTicker = function(time) {
     var x = this;
-    x.tickers[x.interactiveTickerI] = requestAnimFrame(function() { x.interactiveTicker(); });
+    x.tickers[x.interactiveTickerI] = requestAnimationFrame(function() { x.interactiveTicker(); });
     Tween.update(time);
     x.renderer.render(x.stage);
   };
@@ -766,20 +841,19 @@
   // --- Data Algorithms -------------------------
 
   p.dataConversion = function() {
-    var i, l,
+    var i, l, x = this,
       data1 = this.data1,
       data2 = this.data2;
 
-    this.lowest = this.pointsToGraph();
-    this.columnWidth = Math.round(this.w / (data1.length-1));
+    x.lowest = x.pointsToGraph();
 
     // Add x-axis
     for (i=0, l=data1.length; i<l; i++) {
-      if (i < (l-1)) data1[i] = {x: i*this.columnWidth, y: data1[i]}; 
-      else data1[i] = {x: this.w, y: data1[i]}; 
+      if (i < (l-1)) data1[i] = {x: i*x.columnWidth, y: data1[i]}; 
+      else data1[i] = {x: x.w, y: data1[i]}; 
 
-      if (i < (l-1)) data2[i] = {x: i * this.columnWidth, y: data2[i]}; 
-      else data2[i] = {x: this.w, y: data2[i]}; 
+      if (i < (l-1)) data2[i] = {x: i * x.columnWidth, y: data2[i]}; 
+      else data2[i] = {x: x.w, y: data2[i]}; 
     }
 
     // Find ctrl points
@@ -793,8 +867,8 @@
     // Should catch 12 lines if there are 13 points.
     for (i=0, l=data1.length; i<l; i++) {
       if (i===0 || i>=(l-2)) continue;
-      this.ctp1.push(this.lineControlPoints(data1[i-1], data1[i], data1[i+1], data1[i+2], 5, 0.8));
-      this.ctp2.push(this.lineControlPoints(data2[i-1], data2[i], data2[i+1], data2[i+2], 5, 0.8));
+      x.ctp1.push(x.lineControlPoints(data1[i-1], data1[i], data1[i+1], data1[i+2], 5, x.smoothing));
+      x.ctp2.push(x.lineControlPoints(data2[i-1], data2[i], data2[i+1], data2[i+2], 5, x.smoothing));
     }
 
     // Remove start & end.
@@ -899,7 +973,7 @@
     p2 = S1.c2,
     p3 = S2.c1;
 
-    if (showConstruct) {
+    if (this.showConstruct) {
       this.plotSquare(p2, 3, '0xff0000');//red
       this.plotLine(s2, p2, '0xfc69f7');//pink
 
@@ -941,7 +1015,7 @@
     c1 = {x: m1.x + tx, y: m1.y + ty},
     c2 = {x: m2.x + tx, y: m2.y + ty};
 
-    if (showConstruct) {
+    if (this.showConstruct) {
       this.plotLine(s1, s2, '0xdfcb45');// gold
       this.plotLine(s2, s3, '0xdfcb45');// gold
 
@@ -981,7 +1055,7 @@
   };
 
 
-  // --- Private Functions -----------------------
+  // --- Helper Functions -----------------------
 
   function elasticOut(k) { 
     var s, a = 0.1, p = 0.7;
@@ -1006,11 +1080,6 @@
     return !isNaN(parseFloat(num)) && isFinite(num);
   }
 
-  function isString(str) {
-    if (typeof str == 'string' || str instanceof String) return true;
-    else return false;
-  }
-
   function getMin(arr) {
     var result = Infinity;
     for (var i=0, length=arr.length; i<length; i++) 
@@ -1025,7 +1094,82 @@
     return result;
   }
 
+  function findElement() {
+    /*jshint validthis:true */
+    var x = this;
+
+    // ID passed.
+    if (typeof x.selector === 'string' || x.selector instanceof String) {
+      x.target = document.getElementById(x.selector);
+
+    // Element passed.
+    } else {
+      x.target = x.selector;
+    }
+
+    if (!x.target) {
+      console.log('selector returned nothing.');
+      return false;
+
+    } else {
+      return true;
+    }
+  }
+
+  function throttle(delay, no_trailing, callback, debounce) {
+    var timeout_id, at_begin,
+      last_exec = 0,
+      that = this, 
+      args = arguments;
+    
+    if (typeof no_trailing !== 'boolean') {
+      callback = no_trailing;
+      no_trailing = at_begin = false;
+    }
+  
+    function wrapperThrottle() {
+      var elapsed = +new Date() - last_exec;
+      
+      // Clear any existing timeout.
+      if (timeout_id) clearTimeout(timeout_id);
+      
+      if (elapsed > delay) exec();
+      else if (no_trailing !== true) timeout_id = setTimeout(exec, delay - elapsed);
+    }
+
+    function wrapperDebounce() {
+      // Execute 
+      if (!timeout_id) exec();
+      
+      // Clear any existing timeout.
+      if (timeout_id) clearTimeout(timeout_id);
+        
+      if (at_begin !== true) timeout_id = setTimeout(clear, delay);
+    }
+    
+
+    function exec() {
+      // Execute callback & update last_exec.
+      last_exec = +new Date();
+      callback.apply(that, args);
+    }
+
+    function clear() {
+      // Stop future callback executions.
+      timeout_id = undefined;
+    }
+    
+    return debounce? wrapperDebounce : wrapperThrottle;
+  }
+
+  function debounce(delay, at_begin, callback) {
+    return throttle(delay, at_begin, callback, true);
+  }
+
+
   // Export to browser.
   window.Groph = Groph;
+  window.throttle = throttle;
+  window.debounce = debounce;
 
-})();
+})(window);
