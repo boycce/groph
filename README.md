@@ -7,6 +7,7 @@ Create sexy looking line graphs, built with the help of Pixi using the canvas el
 - Support for more line chart styling options
 - Add a destroy method
 - Reduce dependencies
+- ~Resposive charts~
 - Create github pages
 
 ### Contribute ###
@@ -17,6 +18,7 @@ We would love for you to be apart of this project and in the journey of laying d
 
 - Canvas renderer, what drives Google maps
 - Reuse groph instances for a faster build
+- Responsive
 - Sleek animations
 
 ### Example ###
@@ -28,7 +30,7 @@ Include on your page groph and its dependencies. I have compiled pixi with the b
 ```html
 <script src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/tweenjs/0.5.1/tweenjs.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/pixi.js/2.0.0/pixi.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/pixi.js/3.0.8/pixi.min.js"></script>
 <script src="../js/groph.min.js"></script>
 ```
 Run Groph
@@ -54,11 +56,14 @@ var groph = new Groph({
 - `graphPadding`: eg. `[60, 10, 50, 20]`
 - `data1`: Array of your incoming data
 - `data2`: Array of your incoming data
+- `anim`: Animate on init
+- `cwd`: Where the textures are loaded from (two so far).
+- `...` : see code for more...
 
 ### API Methods ###
 
 - `remove`: Removes groph and DOM reference but keeps processed and canvas data.
-- `start`: Sets up groph again. You can re-pass `data1` & `data2`.
+- `remake`: Sets up groph again. You can re-pass any settings
 
 &nbsp;
 
