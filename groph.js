@@ -19,6 +19,7 @@
   function Groph(settings) {
     var x = this;
     Tween = TWEEN;
+    PIXI.dontSayHello = true;
 
     x.defaults = {
       selector : 'graph1',

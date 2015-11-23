@@ -7,7 +7,7 @@ Create sexy looking line graphs, built with the help of Pixi using the canvas el
 - Support for more line chart styling options
 - Add a destroy method
 - Reduce dependencies
-- ~Resposive charts~
+- ~~Resposive charts~~
 - Create github pages
 
 ### Contribute ###
@@ -58,7 +58,7 @@ var groph = new Groph({
 - `data2`: Array of your incoming data
 - `anim`: Animate on init
 - `cwd`: Where the textures are loaded from (two so far).
-- `...` : see code for more...
+- ... see code for more
 
 ### API Methods ###
 
