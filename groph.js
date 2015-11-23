@@ -19,7 +19,6 @@
   function Groph(settings) {
     var x = this;
     Tween = TWEEN;
-    PIXI.dontSayHello = true;
 
     x.defaults = {
       selector : 'graph1',
@@ -177,8 +176,25 @@
     x.data1 = $.extend([], x._data1);
     x.data2 = $.extend([], x._data2);
     x.dataChanged = true;
-    x.anim = false;
+    x.resized = true;
     x.setup();
+  };
+
+  // Removes graph  
+  p.remove = function() {
+    var x = this;
+    if (x.target === null) {
+      console.log('Groph already removed');
+      return;
+    }
+
+    this.removeTooltips();
+    this.removeAnimations();
+
+    // Remove dom link and data?
+    x.target.innerHTML = "";
+    x.target = null;
+    window.removeEventListener('resize', x.resizeBinded);
   };
 
 
@@ -187,8 +203,11 @@
   // Parses settings
   p.settings = function(settings, init) {
     var x = this;
-    $.extend(x, x.defaults, settings || {});
+    settings = settings || {};
 
+    if (init) $.extend(x, x.defaults, settings);
+    else $.extend(x, settings);
+    
     // Find parent element
     if (!findElement.call(this)) return false;
 
@@ -197,12 +216,17 @@
     x._h = x.h;
     x.w  = x.target.offsetWidth;
     x.h  = x.target.offsetHeight;
+    x.resized = false;
     x.graphPadding = $.extend([], x.graphPadding);
-    x.data1  = $.extend([], forceFloat(x.data1));
-    x.data2  = $.extend([], forceFloat(x.data2));
-    x._data1 = $.extend([], x.data1);
-    x._data2 = $.extend([], x.data2);
-    if (settings.data1 || settings.data2) x.dataChanged = true;
+
+    // Data
+    if (init || settings.data1 || settings.data2) x.dataChanged = true;
+    for (var i=1; i<3; i++) {
+      if (settings['data'+ i]) {
+        x['data'+ i] = $.extend([], forceFloat(x['data'+ i]));
+        x['_data'+ i] = $.extend([], x['data'+ i]);
+      }
+    }
 
     // Textures
     if (settings.dot1File || settings.cwd || init) {
@@ -266,7 +290,7 @@
     x.tickers.push(requestAnimationFrame(function(){ x.interactiveTicker(); }));
     x.interactiveTickerI = x.tickers.length - 1;
 
-    var pointerDelay = x.anim? 1500 : 200;
+    var pointerDelay = x.anim && !x.resized? 1500 : 200;
 
     // Display pointer
     x.initDelays.push( setTimeout(function() {
@@ -283,7 +307,7 @@
     // --- Lines setup ------------
 
     // No animation
-    if (!x.anim) {
+    if (!x.anim || x.resized) {
       x.data1Nill = x.data1;
       x.data2Nill = x.data2;
       x.ctp1Nill  = x.ctp1;
@@ -321,19 +345,6 @@
         x.startLineTweens();
       }, 500));
     }
-  };
-
-  // Removes graph  
-  p.remove = function() {
-    var x = this;
-
-    this.removeTooltips();
-    this.removeAnimations();
-
-    // Remove dom link and data?
-    x.target.innerHTML = "";
-    x.target = null;
-    window.removeEventListener('resize', x.resizeBinded);
   };
 
   // Removes animation
