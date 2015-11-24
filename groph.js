@@ -222,7 +222,7 @@
     // Data
     if (init || settings.data1 || settings.data2) x.dataChanged = true;
     for (var i=1; i<3; i++) {
-      if (settings['data'+ i]) {
+      if (settings['data'+ i] || init) {
         x['data'+ i] = $.extend([], forceFloat(x['data'+ i]));
         x['_data'+ i] = $.extend([], x['data'+ i]);
       }
@@ -601,7 +601,7 @@
 
     } else if (dataIndex === x.data1.length-1) {
       tip.x = tip.originalx = -width + Math.round(padding[0] / 2);
-      arrow.x = (width - Math.round(padding[0] / 2)) - 7;
+      arrow.x = (width - Math.round(padding[0] / 2)) - 6;
     }
 
     tip.addChild(bg);
@@ -861,11 +861,14 @@
 
     // Add x-axis
     for (i=0, l=data1.length; i<l; i++) {
-      if (i < (l-1)) data1[i] = {x: i*x.columnWidth, y: data1[i]}; 
-      else data1[i] = {x: x.w, y: data1[i]}; 
+      if (i < (l-1)) {
+        data1[i] = {x: i * x.columnWidth, y: data1[i]}; 
+        data2[i] = {x: i * x.columnWidth, y: data2[i]}; 
 
-      if (i < (l-1)) data2[i] = {x: i * x.columnWidth, y: data2[i]}; 
-      else data2[i] = {x: x.w, y: data2[i]}; 
+      } else {
+        data1[i] = {x: x.w-1, y: data1[i]}; // -1 for pointerline
+        data2[i] = {x: x.w-1, y: data2[i]}; 
+      }
     }
 
     // Find ctrl points
@@ -1129,6 +1132,7 @@
   }
 
   function throttle(delay, no_trailing, callback, debounce) {
+    /*jshint validthis:true */
     var timeout_id, at_begin,
       last_exec = 0,
       that = this, 
