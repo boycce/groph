@@ -202,7 +202,7 @@
 
   // Parses settings
   p.settings = function(settings, init) {
-    var x = this;
+    var data, display, m, x = this;
     settings = settings || {};
 
     if (init) $.extend(x, x.defaults, settings);
@@ -223,8 +223,23 @@
     if (init || settings.data1 || settings.data2) x.dataChanged = true;
     for (var i=1; i<3; i++) {
       if (settings['data'+ i] || init) {
-        x['data'+ i] = $.extend([], forceFloat(x['data'+ i]));
-        x['_data'+ i] = $.extend([], x['data'+ i]);
+
+        display = x['display'+ i] = [];
+        data = x['data'+ i] = $.extend([], forceFloat(x['data'+ i]));
+        x['_data'+ i] = $.extend([], data);
+
+        // If array seperate display data
+        if (data[0] instanceof Array) {
+
+          for (m = data.length; m--;) {
+            if (data[m] instanceof Array) {
+              display[m] = data[m][1];
+              data[m] = data[m][0];
+            } else {
+              display[m] = data[m];
+            }
+          }
+        }
       }
     }
 
@@ -571,7 +586,11 @@
       text  = new PIXI.Text("", {font:"13px Arial", fill:"white"});
 
     // Text
-    text.text = x.symbol + x["_data" + num][dataIndex].toFixed(x.decimals);
+    if (x["display" + num].length) {
+      text.text = x["display" + num][dataIndex];
+    } else {
+      text.text = x.symbol + x["_data" + num][dataIndex].toFixed(x.decimals);
+    }
     text.x = padding[0];
     text.y = padding[1];
 
@@ -1086,8 +1105,21 @@
   }
 
   function forceFloat(array) {
-    for (var i = array.length; i--;)
-      array[i] = parseFloat(array[i]);
+    var i, m;
+
+    // Goes two levels deep.
+    for (i = array.length; i--;) {
+      if (array[i] instanceof Array) {
+        for (m = array[i].length; m--;) {
+
+          // Ignore display values
+          if (m==1) continue; 
+          array[i][m] = parseFloat(array[i][m]);
+        }
+      } else {
+        array[i] = parseFloat(array[i]);
+      }
+    }
     return array;
   }
 
