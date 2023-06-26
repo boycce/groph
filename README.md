@@ -1,6 +1,6 @@
 Groph
 ====
-Create sexy looking line graphs, built with the help of Pixi using the canvas element. Currently groph's API only supports line charts and a single style, but no doubt this will soon change. Made for [Sweet Invoice](http://sweetinvoice.com).
+Create sexy looking line graphs, built with the help of Pixi using the canvas element. Currently groph's API only supports line charts and a single style, but no doubt this will soon change.
 
 ### Road Map ###
 
